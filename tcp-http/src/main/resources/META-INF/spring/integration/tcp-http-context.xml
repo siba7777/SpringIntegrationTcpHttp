@@ -13,10 +13,16 @@
 
 	<context:property-placeholder />
 
-	<!-- Client side -->
+	<!-- ログ出力 全チャネルを対象にしている -->
+	<int:wire-tap channel="logger" pattern="*" />
+	<int:logging-channel-adapter id="logger"
+		log-full-message="true" level="INFO"
+		logger-name="org.springframework.integration.samples.tcphttp" />
+
+	<!-- TCPソケット通信 クライアントサイド -->
 
 	<int:gateway id="gw"
-		service-interface="org.springframework.integration.samples.tcpclientserver.SimpleGateway"
+		service-interface="org.springframework.integration.samples.tcphttp.SimpleGateway"
 		default-request-channel="input" />
 
 	<int-ip:tcp-connection-factory
@@ -33,19 +39,22 @@
 	<int:object-to-string-transformer
 		id="clientBytes2String" input-channel="clientBytes2StringChannel" />
 
-	<!-- Server side -->
+	<!-- サーバサイド -->
 
 	<int-ip:tcp-connection-factory
 		id="crLfServer" type="server" port="${availableServerSocket:0}" />
 
 	<int-ip:tcp-inbound-gateway id="gatewayCrLf"
-		connection-factory="crLfServer"
-		request-channel="serverBytes2StringChannel"
-		error-channel="errorChannel" />
+		connection-factory="crLfServer" request-channel="fromTcp"
+		reply-channel="toTcp" error-channel="errorChannel" />
 
-	<int:object-to-string-transformer
-		id="serverBytes2String" input-channel="serverBytes2StringChannel"
-		output-channel="toHttp" />
+	<!-- CustomOrderへデシリアライズし、JSON形式へ -->
+	<int:chain input-channel="fromTcp" output-channel="toHttp">
+		<int:transformer ref="orderTransformerBean"
+			method="transform" />
+		<int:object-to-json-transformer
+			content-type="text/x-json" />
+	</int:chain>
 
 	<int:transformer id="errorHandler"
 		input-channel="errorChannel"
@@ -53,6 +62,7 @@
 
 	<int:channel id="toHttp" />
 
+	<!-- HTTPサーバへPOST送信 -->
 	<int-http:outbound-gateway
 		request-channel="toHttp" url="http://localhost:8080/echo"
 		http-method="POST" expected-response-type="java.lang.String"
@@ -60,10 +70,17 @@
 
 	<int:channel id="fromHttp" />
 
+	<!-- EchoServiceを通す -->
 	<int:service-activator input-channel="fromHttp"
-		ref="echoService" method="test" />
+		output-channel="toTcp" ref="echoService" method="test" />
 
+	<int:channel id="toTcp" />
+
+	<bean id="orderTransformerBean"
+		class="org.springframework.integration.samples.tcphttp.CustomOrderTransformer" />
 	<bean id="echoService"
-		class="org.springframework.integration.samples.tcpclientserver.EchoService" />
+		class="org.springframework.integration.samples.tcphttp.EchoService" />
+
+
 
 </beans>

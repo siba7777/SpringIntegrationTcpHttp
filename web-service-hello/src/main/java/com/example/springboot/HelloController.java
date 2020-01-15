@@ -15,7 +15,7 @@ public class HelloController {
 	
 	@PostMapping("/echo")
 	public String post(@RequestBody String body) {
-		return "Web API Response "+body;
+		return "OK";
 	}
 
 }

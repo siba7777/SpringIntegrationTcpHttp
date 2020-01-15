@@ -27,6 +27,7 @@ import org.springframework.integration.endpoint.AbstractEndpoint;
 import org.springframework.integration.ip.tcp.connection.AbstractClientConnectionFactory;
 import org.springframework.integration.ip.tcp.connection.AbstractServerConnectionFactory;
 import org.springframework.integration.ip.util.TestingUtilities;
+import org.springframework.integration.samples.tcphttp.SimpleGateway;
 import org.springframework.integration.test.context.SpringIntegrationTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -77,24 +78,17 @@ public class TcpClientServerDemoTest {
 	}
 
 	@Test
-	public void testHappyDay() {
-		String result = gw.send("Hello world!");
+	public void testOK() {
+		String result = gw.send("123PINGPONG02000019You got it to work!");
 		System.out.println(result);
-		assertEquals("echo:Hello world!", result);
-	}
-
-	@Test
-	public void testZeroLength() {
-		String result = gw.send("");
-		System.out.println(result);
-		assertEquals("echo:", result);
+		assertEquals("echo:OK", result);
 	}
 
 	@Test
 	public void testFail() {
-		String result = gw.send("FAIL");
+		String result = gw.send("");
 		System.out.println(result);
-		assertEquals("FAIL:Failure Demonstration", result);
+		assertEquals("FAILED!", result);
 	}
 
 }

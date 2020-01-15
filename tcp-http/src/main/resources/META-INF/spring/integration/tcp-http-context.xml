@@ -18,7 +18,12 @@
 	<int:logging-channel-adapter id="logger"
 		log-full-message="true" level="INFO"
 		logger-name="org.springframework.integration.samples.tcphttp" />
-
+		
+	<!-- デフォルトのエラー時処理 -->
+	<int:transformer id="errorHandler"
+		input-channel="errorChannel"
+		expression="'FAILED!'" />
+		
 	<!-- TCPソケット通信 クライアントサイド -->
 
 	<int:gateway id="gw"
@@ -56,10 +61,6 @@
 			content-type="text/x-json" />
 	</int:chain>
 
-	<int:transformer id="errorHandler"
-		input-channel="errorChannel"
-		expression="payload.failedMessage.payload + ':' + payload.cause.message" />
-
 	<int:channel id="toHttp" />
 
 	<!-- HTTPサーバへPOST送信 -->
@@ -80,7 +81,5 @@
 		class="org.springframework.integration.samples.tcphttp.CustomOrderTransformer" />
 	<bean id="echoService"
 		class="org.springframework.integration.samples.tcphttp.EchoService" />
-
-
 
 </beans>
